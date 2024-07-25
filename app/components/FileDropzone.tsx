@@ -35,7 +35,7 @@ export function FileDropzone({
       {isDragActive ? (
         <p>Drop the file here ...</p>
       ) : (
-        <p>Drag 'n' drop an image here, or click to select a file</p>
+        <p>Drag &apos;n&apos; drop an image here, or click to select a file</p>
       )}
     </div>
   );
