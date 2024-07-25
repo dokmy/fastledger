@@ -14,7 +14,22 @@
 /out/
 
 # production
-/build
+/build   # Environment variables
+   .env
+
+   # Node modules
+   node_modules/
+
+   # Build output
+   .next/
+   out/
+
+   # Log files
+   *.log
+
+   # OS generated files
+   .DS_Store
+   Thumbs.db
 
 # misc
 .DS_Store
@@ -34,3 +49,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.env
