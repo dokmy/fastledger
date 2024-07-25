@@ -3,12 +3,17 @@ import { Webhook } from 'svix'
 import { WebhookEvent } from '@clerk/nextjs/server'
 import { supabase } from '@/lib/supabaseClient'
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
   console.log('Webhook received');
 
   const payload = await req.text()
   const headers = Object.fromEntries(req.headers)
+
+  console.log('Received headers:', headers);
+  console.log('Received payload:', payload);
 
   const webhookSecret = process.env.CLERK_WEBHOOK_SECRET
   if (!webhookSecret) {
@@ -19,12 +24,12 @@ export async function POST(req: Request) {
   const wh = new Webhook(webhookSecret)
   let evt: WebhookEvent
 
-  
   try {
     evt = wh.verify(payload, headers) as WebhookEvent
   } catch (err) {
     console.error('Webhook verification failed:', err);
-    return NextResponse.json({}, { status: 400 })
+    console.error('Webhook secret used:', webhookSecret);
+    return NextResponse.json({ error: 'Webhook verification failed' }, { status: 400 })
   }
 
   const eventType = evt.type
