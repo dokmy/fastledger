@@ -3,8 +3,6 @@ import { Webhook } from 'svix'
 import { WebhookEvent } from '@clerk/nextjs/server'
 import { supabase } from '@/lib/supabaseClient'
 
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
 
 export async function POST(req: Request) {
   console.log('Webhook received');
@@ -21,13 +19,12 @@ export async function POST(req: Request) {
   const wh = new Webhook(webhookSecret)
   let evt: WebhookEvent
 
+  
   try {
     evt = wh.verify(payload, headers) as WebhookEvent
   } catch (err) {
     console.error('Webhook verification failed:', err);
-    console.error('Payload:', payload);
-    console.error('Headers:', headers);
-    return NextResponse.json({ error: 'Webhook verification failed' }, { status: 400 })
+    return NextResponse.json({}, { status: 400 })
   }
 
   const eventType = evt.type
