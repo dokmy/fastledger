@@ -89,10 +89,17 @@ export function UploadedFilesTable({
     setLoadingRows((prev) => ({ ...prev, [rowIndex]: true }));
 
     try {
+      const img = new Image();
+      img.src = s3Url;
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+      const imageDimensions = { width: img.width, height: img.height };
+
       const response = await fetch("/api/analyze-receipt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ s3Url }),
+        body: JSON.stringify({ s3Url, imageDimensions }),
       });
       const result = await response.json();
 

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { parse, format, isValid } from 'date-fns';
+import { calculateImageTokens, calculateCost } from '@/utils/tokenCalculator';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -28,7 +29,14 @@ const parseAndFormatDate = (dateString: string): string => {
 
 export async function POST(request: Request) {
   try {
-    const { s3Url } = await request.json();
+    const { s3Url, imageDimensions } = await request.json();
+
+    const imageTokens = calculateImageTokens(imageDimensions, 'high');
+    const imageCost = calculateCost(imageTokens);
+
+    console.log(`Image dimensions: ${imageDimensions.width}x${imageDimensions.height}`);
+    console.log(`Image tokens: ${imageTokens}`);
+    console.log(`Image cost: $${imageCost.toFixed(6)}`);
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -63,6 +71,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No content in OpenAI response' }, { status: 500 });
     }
 
+    const totalTokens = imageTokens + (response.usage?.total_tokens || 0);
+    const cost = calculateCost(totalTokens);
+
+    console.log(`Image token cost: ${imageTokens}`);
+    console.log(`Image dimensions: ${imageDimensions.width}x${imageDimensions.height}`);
+    const tiles = Math.ceil(imageDimensions.width / 512) * Math.ceil(imageDimensions.height / 512);
+    console.log(`Number of 512x512 tiles: ${tiles}`);
+    console.log(`Base tokens: 85`);
+    console.log(`Tile tokens: ${tiles * 170}`);
+    console.log(`Total image tokens: ${imageTokens}`);
+    console.log(`Total tokens used: ${totalTokens}`);
+    console.log(`Estimated cost: $${cost.toFixed(4)}`);
+
     let receiptData;
 
     try {
@@ -84,7 +105,7 @@ export async function POST(request: Request) {
     }
 
     console.log("Final receiptData to be sent back:", receiptData);
-    return NextResponse.json(receiptData);
+    return NextResponse.json({ ...receiptData, tokens: totalTokens, cost });
   } catch (error) {
     console.error('Error analyzing receipt:', error);
     return NextResponse.json({ error: 'Error analyzing receipt' }, { status: 500 });
